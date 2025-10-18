@@ -1,45 +1,53 @@
 package org.example.taskmanager.service;
 
 
-import org.example.taskmanager.Priority;
+import jakarta.persistence.EntityNotFoundException;
 import org.example.taskmanager.Status;
 import org.example.taskmanager.model.Task;
-import org.example.taskmanager.repository.Repository;
+import org.example.taskmanager.model.TaskEntity;
+import org.example.taskmanager.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.List;
 
 @Service
 public class TaskService {
 
-    private final Repository repository;
 
 
-    public TaskService(Repository repository) {
-        this.repository = repository;
+    private final TaskRepository taskRepository;
+
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
     }
 
-    public Task getTaskByIdService(Long id) throws NoSuchElementException {
-        if(repository.getTaskById(id)==null){
-            throw new NoSuchElementException("There is no elements found by ID: " + id);
-        }
-        return repository.getTaskById(id);
+
+    public Task getTaskById(Long id) {
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found task by ID: "+id));
+
+        return fromEntityToDomain(taskEntity);
     }
     
-    public Map<Long, Task> getAllTasks(){
-        return repository.getRepository();
+    public List<Task> getAllTasks(){
+        List<TaskEntity> allEntities = taskRepository.findAll();
+        return allEntities.stream()
+                .map(this::fromEntityToDomain)
+                .toList();
     }
 
 
-    public Task createNewTask(Task taskToCreate) {
-        if(taskToCreate.id() != null){
+    public Task createNewTask(Task taskToCreate)
+    {
+        if (taskToCreate.id() != null){
             throw new IllegalArgumentException("ID should be empty!");
         }
-        var newTask = new Task(
-                repository.getIdCounter().incrementAndGet(),
+        if (taskToCreate.status() != null){
+            throw new IllegalArgumentException("Status should be empty!");
+        }
+        var entityToSave = new TaskEntity(
+                null,
                 taskToCreate.creatorId(),
                 taskToCreate.assignedUserId(),
                 Status.CREATED,
@@ -47,37 +55,59 @@ public class TaskService {
                 taskToCreate.deadLineDate(),
                 taskToCreate.priority()
         );
-        repository.createNewTask(newTask.id(),newTask);
-        return newTask;
-    }
-
-    public void deleteTask(Long id) {
-        if(!repository.getRepository().containsKey(id)){
-            throw new NoSuchElementException("There is no elements found by ID: " + id);
-        } else repository.getRepository().remove(id);
+        var savedEntity = taskRepository.save(entityToSave);
+        return fromEntityToDomain(savedEntity);  //мапим и возвращаем сущность с уже проставленным айди из базы
     }
 
 
-    public Task editTask(Long id, Task dataToUpdate) {
-        if(repository.getTaskById(id) == null){
-            throw new NoSuchElementException("There is no task found by ID: " + id);
+
+    public void deleteTask(Long id)
+    {
+        TaskEntity entityToDelete = taskRepository.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException( "There is no task found by ID: "+id));
+        taskRepository.delete(entityToDelete);
+    }
+
+
+
+    public Task editTask(Long id, Task dataToUpdate)
+    {
+        var taskEntity = taskRepository.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException( "There is no task found by ID: "+id));
+
+        if (taskEntity.getStatus() == Status.DONE){
+            throw new IllegalStateException("Cannot modify tasks with Status.DONE: " + fromEntityToDomain(taskEntity));
         }
-        var task = repository.getTaskById(id);
-        if (task.status() == Status.DONE){
-            throw new IllegalStateException("Cannot modify tasks with Status.DONE" + task);
-        } else {
-            var updatedTask = new Task(
-                    task.id(),
+        if (dataToUpdate.status() != null){
+            throw new IllegalArgumentException("Field Status should be empty because it's going to get Status.UPDATED by default case: "+ fromEntityToDomain(taskEntity));
+        }
+          else {
+            var entityToUpdate = new TaskEntity(
+                    taskEntity.getId(),
                     dataToUpdate.creatorId(),
                     dataToUpdate.assignedUserId(),
                     Status.UPDATED,
-                    LocalDateTime.now(),
+                    taskEntity.getCreateDateTime(),
                     dataToUpdate.deadLineDate(),
                     dataToUpdate.priority()
             );
-            repository.getRepository().put(task.id(), updatedTask);
-            return updatedTask;
-        }
+            var updatedEntity = taskRepository.save(entityToUpdate);
+            return fromEntityToDomain(updatedEntity);
+          }
+    }
+
+
+
+    private Task fromEntityToDomain (TaskEntity entity){
+        return new Task(
+                entity.getId(),
+                entity.getCreatorId(),
+                entity.getAssignedUserId(),
+                entity.getStatus(),
+                entity.getCreateDateTime(),
+                entity.getDeadLineDate(),
+                entity.getPriority()
+        );
     }
 }
 

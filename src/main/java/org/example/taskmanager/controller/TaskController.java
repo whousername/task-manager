@@ -27,7 +27,7 @@ public class TaskController {
     public ResponseEntity<Task> getTaskById(@PathVariable Long id){
         log.info("getTaskById method called with id = {}", id);
         try {
-            return ResponseEntity.ok(taskService.getTaskByIdService(id));
+            return ResponseEntity.ok(taskService.getTaskById(id));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(404)
                     .build();
@@ -35,7 +35,7 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<Map<Long, Task>> getAllTasks(){
+    public ResponseEntity<List<Task>> getAllTasks(){
         log.info("getAllTasks method called");
         return ResponseEntity.ok(taskService.getAllTasks());
     }
