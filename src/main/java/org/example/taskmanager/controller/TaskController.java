@@ -1,5 +1,6 @@
 package org.example.taskmanager.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.example.taskmanager.model.Task;
 import org.example.taskmanager.service.TaskService;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public class TaskController {
         log.info("getTaskById method called with id = {}", id);
         try {
             return ResponseEntity.ok(taskService.getTaskById(id));
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(404)
                     .build();
         }
@@ -43,9 +44,15 @@ public class TaskController {
     @PostMapping
     public ResponseEntity<Task> createNewTask(@RequestBody Task taskToCreate){
         log.info("createNewTask method called");
-        return ResponseEntity.status(201)
-                .body(taskService.createNewTask(taskToCreate));
+        try {
+            return ResponseEntity.status(201)
+                    .body(taskService.createNewTask(taskToCreate));
+        } catch (IllegalArgumentException e){
+            return ResponseEntity.status(404)
+                    .build();
+        }
     }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> editTask(
@@ -56,7 +63,7 @@ public class TaskController {
         try {
             var updatedTask = taskService.editTask(id, taskToEdit);
             return ResponseEntity.ok(updatedTask);
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException | IllegalStateException e) {
             return ResponseEntity.status(404)
                     .build();
         }
@@ -70,25 +77,36 @@ public class TaskController {
             taskService.deleteTask(id);
             return ResponseEntity.ok()
                     .build();
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.status(404)
                     .build();
         }
     }
 
+
+    @PostMapping("/{id}/start")
+    public ResponseEntity<Task> switchTaskToInProgress(@PathVariable Long id){
+        log.info("switchTaskToInProgress method called with ID: " + id);
+        try {
+            var switchedTask = taskService.switchTaskToInProgress(id);
+            return ResponseEntity.ok(switchedTask);
+        } catch (NoSuchElementException | IllegalStateException e) {
+            return ResponseEntity.status(404)
+                    .build();
+        }
+    }
+
+
+    @GetMapping("/user/{assignedUserId}")
+    public ResponseEntity<List<Task>> getAllTasksOfOneUserAssignedUser(@PathVariable Long assignedUserId){
+        try {
+            return ResponseEntity.ok(taskService.getAllTasksOfOneUserAssignedUser(assignedUserId));
+        } catch (NoSuchElementException e){
+            return ResponseEntity.status(404)
+                    .build();
+        }
+    }
+
+
 }
 
-
-//добавить title & description
-
-
-
-//Вместо try/catch в каждом контроллере, можно централизовать обработку:
-//@RestControllerAdvice
-//public class GlobalExceptionHandler {
-//
-//    @ExceptionHandler(NoSuchElementException.class)
-//    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
-//        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-//    }
-//}

@@ -83,8 +83,8 @@ public class TaskEntity {
         return status;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public Status setStatus(Status status) {
+        return this.status = status;
     }
 
     public LocalDateTime getCreateDateTime() {
