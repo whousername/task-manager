@@ -1,8 +1,6 @@
-package org.example.taskmanager.model;
+package org.example.taskmanager.tasks;
 
 import jakarta.persistence.*;
-import org.example.taskmanager.Priority;
-import org.example.taskmanager.Status;
 
 import java.time.LocalDateTime;
 
@@ -15,42 +13,55 @@ public class TaskEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY) //чето там генератор какой то?
     private Long id;
 
-    @Column(name = "creator id")
+    @Column(name = "task title", nullable = false)
+    String title;
+
+    @Column(name = "task description")
+    String description;
+
+    @Column(name = "creator id", nullable = false)
     private Long creatorId;
 
-    @Column(name = "assigned user id")
+    @Column(name = "assigned user id", nullable = false)
     private Long assignedUserId;
 
-    @Enumerated(EnumType.STRING) //аннотация для сохранения енама в базу как стринг
-    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private Status status;
 
-    @Column(name = "create date and time")
+    @Column(name = "create date and time", nullable = false)
     private LocalDateTime createDateTime;
 
-    @Column(name = "dead line")
+    @Column(name = "dead line date and time", nullable = false)
     private LocalDateTime deadLineDate;
 
-    @Enumerated(EnumType.STRING) //аннотация для сохранения енама в базу как стринг
-    @Column(name = "priority")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false)
     private Priority priority;
+
+    @Column(name = "done date and time")
+    LocalDateTime doneDataTime;
 
 
 
     public TaskEntity() {
     }
 
-    public TaskEntity(Long id, Long creatorId, Long assignedUserId,
+    public TaskEntity(Long id, String title, String description, Long creatorId, Long assignedUserId,
                       Status status, LocalDateTime createDateTime,
-                      LocalDateTime deadLineDate, Priority priority
+                      LocalDateTime deadLineDate, Priority priority,
+                      LocalDateTime doneDataTime
     ) {
         this.id = id;
+        this.title = title;
+        this.description = description;
         this.creatorId = creatorId;
         this.assignedUserId = assignedUserId;
         this.status = status;
         this.createDateTime = createDateTime;
         this.deadLineDate = deadLineDate;
         this.priority = priority;
+        this.doneDataTime = doneDataTime;
     }
 
 
@@ -61,6 +72,22 @@ public class TaskEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Long getCreatorId() {
@@ -109,5 +136,13 @@ public class TaskEntity {
 
     public void setPriority(Priority priority) {
         this.priority = priority;
+    }
+
+    public LocalDateTime getDoneDataTime() {
+        return doneDataTime;
+    }
+
+    public void setDoneDataTime(LocalDateTime doneDataTime) {
+        this.doneDataTime = doneDataTime;
     }
 }

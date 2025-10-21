@@ -1,4 +1,4 @@
-package org.example.taskmanager;
+package org.example.taskmanager.tasks;
 
 public enum Priority {
     LOW,
