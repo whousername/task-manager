@@ -97,7 +97,7 @@ public class TaskService {
         var entity = taskRepository.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("There is no task found by ID: "+id));
 
-        int countEntities = taskRepository.countAllEntitiesInProgressByAssignedUserId(entity.getAssignedUserId());
+        int countEntities = taskRepository.countByAssignedUserIdAndStatus(entity.getAssignedUserId(),Status.IN_PROGRESS);
         if(countEntities > 4){
             throw new IllegalStateException("User ID " + entity.getAssignedUserId() + " already got " + countEntities + " active tasks. Cannot switch to IN_PROGRESS if user has more than 4 active tasks.");
         }
