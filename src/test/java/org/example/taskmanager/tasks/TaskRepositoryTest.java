@@ -102,9 +102,3 @@ class TaskRepositoryTest {
                 .allMatch(e -> e.getStatus() == Status.UPDATED && e.getPriority() == Priority.MEDIUM);
     }
 }
-
-
-//докатить тесты репо
-//проверка с гпт
-//видос
-//комитить позже тесты репо
