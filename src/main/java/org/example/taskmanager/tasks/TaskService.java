@@ -45,6 +45,7 @@ public class TaskService {
     {
         var entityToSave =  TaskMapper.fromDomainToEntity(taskToCreate);
         entityToSave.setStatus(Status.CREATED);
+        entityToSave.setCreateDateTime(LocalDateTime.now());
 
         var savedEntity = taskRepository.save(entityToSave);
         logService.info("New task created with id = " + savedEntity.getId());

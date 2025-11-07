@@ -140,7 +140,9 @@ class TaskServiceTest {
 
         Assertions.assertThat(savedEntity)
                 .isNotNull()
-                .matches(e -> e.status() == Status.CREATED);
+                .matches(e -> e.status() == Status.CREATED)
+                .matches(e -> e.createDateTime() != null);
+
         verify(taskRepository).save(any(TaskEntity.class));
     }
 
