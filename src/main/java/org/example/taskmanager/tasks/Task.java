@@ -1,9 +1,11 @@
 package org.example.taskmanager.tasks;
 
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
+@Builder
 public record Task(
 
         @Null

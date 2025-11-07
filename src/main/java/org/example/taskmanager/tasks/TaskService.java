@@ -43,12 +43,9 @@ public class TaskService {
     @Transactional
     public Task createNewTask(Task taskToCreate)
     {
-        if (taskToCreate.deadLineDate().isBefore(LocalDateTime.now())){
-            throw new IllegalArgumentException("Deadline cannot be in the past!");
-        }
-
         var entityToSave =  TaskMapper.fromDomainToEntity(taskToCreate);
         entityToSave.setStatus(Status.CREATED);
+        entityToSave.setCreateDateTime(LocalDateTime.now());
 
         var savedEntity = taskRepository.save(entityToSave);
         logService.info("New task created with id = " + savedEntity.getId());
@@ -75,7 +72,7 @@ public class TaskService {
             throw new IllegalStateException("Cannot modify tasks with Status.DONE, first switch it to IN_PROGRESS " + TaskMapper.fromEntityToDomain(taskEntity));
         }
         if(dataToUpdate.status() == Status.CREATED){
-            throw new IllegalArgumentException("Cannot modify task-Status to Status.CREATED, id = "+id);
+            throw new IllegalArgumentException("Cannot modify task-Status to Status.CREATED");
         }
         if (dataToUpdate.deadLineDate().isBefore(LocalDateTime.now())){
             throw new IllegalArgumentException("Dead-line date should be before the time of creation!");
@@ -97,7 +94,7 @@ public class TaskService {
         var entity = taskRepository.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("There is no task found by ID: "+id));
 
-        int countEntities = taskRepository.countAllEntitiesInProgressByAssignedUserId(entity.getAssignedUserId());
+        int countEntities = taskRepository.countByAssignedUserIdAndStatus(entity.getAssignedUserId(),Status.IN_PROGRESS);
         if(countEntities > 4){
             throw new IllegalStateException("User ID " + entity.getAssignedUserId() + " already got " + countEntities + " active tasks. Cannot switch to IN_PROGRESS if user has more than 4 active tasks.");
         }
@@ -107,12 +104,9 @@ public class TaskService {
 
 
     public List<Task> getAllTasksOfOneAssignedUser(Long assignedUserId){
-        List<Task> tasks = taskRepository.findAllEntitiesByAssignedUserId(assignedUserId).stream()
+        return taskRepository.findAllEntitiesByAssignedUserId(assignedUserId).stream()
                 .map(TaskMapper::fromEntityToDomain)
                 .toList();
-        if (tasks.isEmpty()){
-            throw new NoSuchElementException("There is no tasks found for user with userID: " + assignedUserId);
-        } else return tasks;
     }
 
 
@@ -120,16 +114,8 @@ public class TaskService {
 
         var entity = taskRepository.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("There is no task found by ID: "+id));
-        if(
-                entity.getCreatorId() == null || entity.getCreatorId() == 0 ||
-                entity.getAssignedUserId() == null || entity.getAssignedUserId() == 0 ||
-                entity.getDeadLineDate() == null) {
 
-            throw new IllegalArgumentException("Required fields: CreatorId, AssignedUserId, DeadLineDate. " +
-                    "Correct the fields first and try again!");
-        }
-        else {
-            var entityToUpdate = new TaskEntity(
+        var entityToUpdate = new TaskEntity(
                     entity.getId(),
                     entity.getTitle(),
                     entity.getDescription(),
@@ -140,14 +126,12 @@ public class TaskService {
                     entity.getDeadLineDate(),
                     entity.getPriority(),
                     LocalDateTime.now()
-            );
-            var updatedEntity = taskRepository.save(entityToUpdate);
-            logService.info("Task id = "+updatedEntity.getId()+" switched to Status.DONE.");
-
-            return TaskMapper.fromEntityToDomain(updatedEntity);
-        }
-
+        );
+        var updatedEntity = taskRepository.save(entityToUpdate);
+        logService.info("Task id = "+updatedEntity.getId()+" switched to Status.DONE.");
+        return TaskMapper.fromEntityToDomain(updatedEntity);
     }
+
 
     public List<Task> searchAllByFilter(TaskSearchFilter filter) {
 
