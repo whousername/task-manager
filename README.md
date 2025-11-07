@@ -13,6 +13,7 @@ Education REST-app for managing tasks
 - Docker
 - SLF4J / Logback
 - Bean Validation (Jakarta Validation)
+- Testing: JUnit 5, Mockito, Spring Boot Test
 
 ---
 
